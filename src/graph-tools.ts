@@ -445,6 +445,10 @@ export function registerGraphTools(
     }
   );
 
+  let registeredCount = 0;
+  let skippedCount = 0;
+  let failedCount = 0;
+
   for (const tool of api.endpoints) {
     const endpointConfig = endpointsData.find((e) => e.toolName === tool.alias);
     if (!orgMode && endpointConfig && !endpointConfig.scopes && endpointConfig.workScopes) {
