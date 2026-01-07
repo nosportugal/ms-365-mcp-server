@@ -41,7 +41,7 @@ export async function exchangeCodeForToken(
   code: string,
   redirectUri: string,
   clientId: string,
-  clientSecret: string,
+  clientSecret: string | undefined,
   tenantId: string = 'common',
   codeVerifier?: string
 ): Promise<{
@@ -56,8 +56,12 @@ export async function exchangeCodeForToken(
     code,
     redirect_uri: redirectUri,
     client_id: clientId,
-    client_secret: clientSecret,
   });
+
+  // Add client_secret for confidential clients
+  if (clientSecret) {
+    params.append('client_secret', clientSecret);
+  }
 
   // Add code_verifier for PKCE flow
   if (codeVerifier) {
@@ -87,7 +91,7 @@ export async function exchangeCodeForToken(
 export async function refreshAccessToken(
   refreshToken: string,
   clientId: string,
-  clientSecret: string,
+  clientSecret: string | undefined,
   tenantId: string = 'common'
 ): Promise<{
   access_token: string;
@@ -96,17 +100,22 @@ export async function refreshAccessToken(
   expires_in: number;
   refresh_token?: string;
 }> {
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: clientId,
+  });
+
+  if (clientSecret) {
+    params.append('client_secret', clientSecret);
+  }
+
   const response = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
+    body: params,
   });
 
   if (!response.ok) {

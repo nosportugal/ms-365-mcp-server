@@ -16,8 +16,8 @@ async function main(): Promise<void> {
       logger.info('Organization mode enabled - including work account scopes');
     }
 
-    const scopes = buildScopesFromEndpoints(includeWorkScopes);
-    const authManager = new AuthManager(undefined, scopes);
+    const scopes = buildScopesFromEndpoints(includeWorkScopes, args.enabledTools);
+    const authManager = await AuthManager.create(scopes);
     await authManager.loadTokenCache();
 
     if (args.login) {
