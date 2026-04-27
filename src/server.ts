@@ -13,6 +13,7 @@ import { MicrosoftOAuthProvider } from './oauth-provider.js';
 import {
   exchangeCodeForToken,
   microsoftBearerTokenAuthMiddleware,
+  microsoftOptionalBearerTokenAuthMiddleware,
   refreshAccessToken,
 } from './lib/microsoft-auth.js';
 import type { CommandOptions } from './cli.ts';
@@ -521,7 +522,7 @@ class MicrosoftGraphServer {
       // Handle both GET and POST methods as required by MCP Streamable HTTP specification
       app.get(
         '/mcp',
-        microsoftBearerTokenAuthMiddleware,
+        microsoftOptionalBearerTokenAuthMiddleware,
         async (req: Request & { microsoftAuth?: { accessToken: string } }, res: Response) => {
           const handler = async () => {
             const server = this.createMcpServer();
@@ -562,7 +563,7 @@ class MicrosoftGraphServer {
 
       app.post(
         '/mcp',
-        microsoftBearerTokenAuthMiddleware,
+        microsoftOptionalBearerTokenAuthMiddleware,
         async (req: Request & { microsoftAuth?: { accessToken: string } }, res: Response) => {
           const handler = async () => {
             const server = this.createMcpServer();

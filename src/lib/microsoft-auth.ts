@@ -25,7 +25,7 @@ function isJwtExpired(token: string): boolean {
 }
 
 /**
- * Microsoft Bearer Token Auth Middleware validates that the request has a valid Microsoft access token.
+ * Strict middleware: rejects requests without a valid Bearer token (401).
  * Returns HTTP 401 + WWW-Authenticate on missing or expired tokens so spec-compliant MCP clients
  * refresh via the /token endpoint. Opaque tokens fall through and are validated by Graph.
  */
@@ -64,6 +64,31 @@ export const microsoftBearerTokenAuthMiddleware = (
   }
 
   req.microsoftAuth = { accessToken };
+
+  next();
+};
+
+/**
+ * Permissive middleware: extracts a Bearer token when present but allows
+ * unauthenticated requests through. MCP protocol messages like `initialize`
+ * and `tools/list` do not call Graph API, so they work without a token.
+ * Actual tool calls will fail at the Graph layer when no token is available,
+ * which is the correct behaviour for BYOT (Bring Your Own Token) integrations
+ * where the token is injected per-request at tool-call time.
+ */
+export const microsoftOptionalBearerTokenAuthMiddleware = (
+  req: Request & { microsoftAuth?: { accessToken: string } },
+  _res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const accessToken = authHeader.substring(7);
+    if (!isJwtExpired(accessToken)) {
+      req.microsoftAuth = { accessToken };
+    }
+  }
 
   next();
 };
